@@ -1,0 +1,132 @@
+<apex:page controller="vf_searchacc_controller" sidebar="false" docType="html-5.0" id="wholePage">
+<head>
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { width:800px;height:600px; }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script>
+        var map;
+
+        function initialize() {
+            var mapOptions = {
+                center: new google.maps.LatLng({!latitude}, {!longitude}),
+                zoom: 9
+            };
+            map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+            loadAccounts();
+            
+        }
+        
+        // adding marker to the map
+        function addMarker(id, name, lat, lng) {
+            var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lng),
+                    map: map,
+                    title: name,
+                    icon : 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' // green marker
+                  //  icon : 'http://www.robotwoods.com/dev/misc/bluecircle.png' // small blue circle
+            });
+            google.maps.event.addListener(marker, 'click', function(event) {
+                window.top.location = '/' + id;
+            });
+        }
+        
+        // loading latitudes and longitudes from the accounts
+        function loadAccounts() {
+            var accs = new Array();
+            
+            <apex:repeat value="{!accsToShow}" var="a">
+                /*
+                // Array of object to store id, name, latitude and longitude
+                var acc = new Object();
+                acc.id = '{!a.acc.id}';
+                acc.name = '{!a.acc.name}';
+                acc.lat = '{!a.acc.BillingLatitude}';
+                acc.lng = '{!a.acc.BillingLongitude}';
+                accs.push(acc);
+                */
+                addMarker('{!a.acc.id}', '{!a.acc.name}', '{!a.acc.BillingLatitude}', '{!a.acc.BillingLongitude}');
+            </apex:repeat>
+            console.log(accs);
+        }
+        
+        
+        $(window).ready(function() {
+            console.log('ready !!');
+            console.log('Location- latitude: '+{!latitude}+'longitude: '+{!longitude});
+            google.maps.event.addDomListener(window, 'load', initialize);
+        });
+
+        
+
+    </script>
+</head>
+
+ <apex:form id="vfPage">
+  <apex:pageBlock mode="edit" id="page">
+      <apex:pageBlockButtons location="top" id="pageButton">
+          
+              <apex:commandButton value="Search" action="{! searchData}" >
+                  <apex:actionSupport event="onclick" reRender="map-canvas"/>
+              </apex:commandButton>
+          	<!-- pagination control buttons -->
+              <apex:commandButton value="< Previous" action="{! previous}" disabled="{!DisablePrevious}" reRender="page"/>
+              <apex:commandButton value="Next >" action="{! next}" disabled="{!DisableNext}" reRender="page"/>
+              
+      </apex:pageBlockButtons>
+      
+      <apex:pageblockSection title="Search" collapsible="false" columns="2">
+              
+              <apex:inputText value="{! city}" label="City" required="true"/>
+              <apex:inputText value="{! distance}" label="Distance (mi)" required="true"/>
+              
+      </apex:pageblockSection>
+
+      <!-- to show the results in a table -->
+      <apex:pageBlockSection title="Results" collapsible="false" id="SearchTable" columns="1">
+          <apex:pageBlockTable value="{! accsToShow}" var="a">
+              <apex:column headerValue="ID">
+                  <apex:actionSupport event="onclick" reRender="accDetails">
+                      <apex:outputLabel value="{!a.acc.id}"/>
+                      <apex:param name="q" value="{!a.acc.id}" />
+                  </apex:actionSupport>
+              </apex:column>
+              <apex:column headerValue="Name" value="{! a.acc.Name}"/>
+              <apex:column headerValue="Street" value="{! a.acc.BillingStreet}"/>
+              <apex:column headerValue="City" value="{! a.acc.BillingCity}"/>
+              <apex:column headerValue="State" value="{! a.acc.BillingState}"/>
+              <apex:column headerValue="Postal Code" value="{! a.acc.BillingPostalCode}"/>
+              <apex:column headerValue="Created Date" value="{! a.acc.CreatedDate}"/>
+              <apex:column headerValue="Slection" >
+                  <apex:actionSupport action="{! getSelected}" event="onclick" reRender="accDetails">
+                      <apex:inputCheckbox value="{! a.selected}"/>
+                  </apex:actionSupport>
+              </apex:column>
+          </apex:pageBlockTable>
+      </apex:pageBlockSection>
+      </apex:pageBlock>
+     
+      <apex:pageBlock >
+          <apex:pageBlockSection columns="2" showHeader="true" title="Other Infromation">
+              <apex:pageBlockSectionItem dataStyle="text-align:left; width: 50%; max-width: 55%;">
+                  <apex:pageBlockTable id="accDetails" value="{! selectedAcc}" var="a">
+                      <apex:column value="{! a.name}"/>
+                  </apex:pageBlockTable>
+                  <apex:outputPanel >
+                  <apex:input type="date" value="{!datePicker}"/><br />
+                  <apex:commandButton value="Add" action="{!addToInteniery}"/>
+                  </apex:outputPanel>
+                  
+              </apex:pageBlockSectionItem>
+              <apex:pageblockSectionItem id="map">
+                  <div id="map-canvas"/>
+              </apex:pageblockSectionItem>
+          </apex:pageBlockSection>
+      
+      </apex:pageBlock>
+  </apex:form>
+  
+</apex:page>

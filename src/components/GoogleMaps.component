@@ -1,0 +1,55 @@
+<apex:component >
+    <!-- to store the user location latitude -->
+    <apex:attribute name="latitude" description="value for the latitude." type="decimal" required="true"/>
+    <!-- to store the user location longitude -->
+    <apex:attribute name="longitude" description="value for the longitude." type="decimal" required="true"/>
+    <!-- to store the Account list which has to be displayed on maps using marker -->
+    <apex:attribute name="list" description="list to hold SObjects which need to be displayed in maps" type="Account[]" required="true"/>
+    <!-- the html dom element where the maps should be displayed in web page -->
+    <apex:attribute name="htmlElement" description="dom element to display map" type="String" required="true"/>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script>
+        var map;
+
+        function initialize() {
+            var mapOptions = {
+                center: new google.maps.LatLng({!latitude}, {!longitude}),
+                zoom: 9
+            };
+            map = new google.maps.Map(document.getElementById("{!htmlElement}"), mapOptions);
+            loadAccounts();
+            
+        }
+        
+        // adding marker to the map
+        function addMarker(id, name, lat, lng) {
+            var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(lat, lng),
+                    map: map,
+                    title: name,
+                    icon : 'http://maps.google.com/mapfiles/ms/icons/green-dot.png' // green marker
+                  //  icon : 'http://www.robotwoods.com/dev/misc/bluecircle.png' // small blue circle
+            });
+            google.maps.event.addListener(marker, 'click', function(event) {
+                window.top.location = '/' + id;
+            });
+        }
+        
+        // loading latitudes and longitudes from the accounts
+        function loadAccounts() {
+            <apex:repeat value="{!list}" var="a">
+                addMarker('{!a.id}', '{!a.name}', '{!a.BillingLatitude}', '{!a.BillingLongitude}');
+            </apex:repeat>
+        }
+        
+    	// loads the maps when document has loaded succesfully
+        $(window).ready(function() {
+            console.log('ready !!');
+            console.log('Location- latitude: '+{!latitude}+'longitude: '+{!longitude});
+            google.maps.event.addDomListener(window, 'load', initialize);
+        });
+
+    </script>
+</apex:component>
